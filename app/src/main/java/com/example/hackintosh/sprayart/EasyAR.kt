@@ -11,6 +11,7 @@ class EasyAR {
     private val trackers = ArrayList<ImageTracker>()
     private var videobg_renderer: Renderer? = null
     private var box_renderer: BoxRenderer? = null
+    private var imageRenderer: ImageRenderer? = null
     private var viewport_changed = false
     private var view_size = Vec2I(0, 0)
     private var rotation = 0
@@ -113,7 +114,9 @@ class EasyAR {
         }
         videobg_renderer = Renderer()
         box_renderer = BoxRenderer()
+        imageRenderer = ImageRenderer()
         box_renderer!!.init()
+        imageRenderer!!.init()
     }
 
     fun resizeGL(width: Int, height: Int) {
@@ -171,9 +174,11 @@ class EasyAR {
             for (targetInstance in frame.targetInstances()) {
                 val status = targetInstance.status()
                 if (status == TargetStatus.Tracked) {
+                    Log.e("TargetLoop","tracked")
                     val target = targetInstance.target()
                     val imagetarget = target as? ImageTarget ?: continue
-                    box_renderer?.render(camera!!.projectionGL(0.2f, 500f), targetInstance.poseGL(), imagetarget.size())
+                    //box_renderer?.render(camera!!.projectionGL(0.2f, 500f), targetInstance.poseGL(), imagetarget.size())
+                    imageRenderer?.render(camera!!.projectionGL(0.2f, 500f), targetInstance.poseGL(), imagetarget.size());
                 }
             }
         } finally {
