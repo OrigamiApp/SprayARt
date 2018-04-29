@@ -1,5 +1,7 @@
 package com.example.hackintosh.sprayart
 
+import android.content.Context
+import android.content.CursorLoader
 import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
@@ -7,6 +9,19 @@ import android.util.Log
 import android.view.ViewGroup
 import android.view.WindowManager
 import cn.easyar.Engine
+import kotlinx.android.synthetic.main.activity_spray_art.*
+import android.provider.MediaStore
+import android.content.Intent
+import android.database.Cursor
+import android.net.Uri
+import android.os.Environment
+import android.support.v4.app.FragmentActivity
+import android.support.v4.content.FileProvider
+import android.view.View
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.*
+
 
 class SprayArt: AppCompatActivity() {
     companion object {
@@ -14,6 +29,10 @@ class SprayArt: AppCompatActivity() {
     }
 
     private var glView: GLView? = null
+    private val REQUEST_IMAGE_CAPTURE = 100
+    private val REQUEST_SELECT_PICTURE = 101
+    private var mCurrentPhotoPath = ""
+    private val helper by lazy { TextureHelper(BitmapFactory.decodeResource(resources, R.drawable.sausages))}
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -23,9 +42,96 @@ class SprayArt: AppCompatActivity() {
         if (!Engine.initialize(this, key)) {
             Log.e("HelloAR", "Initialization Failed.")
         }
-        TextureHelper.updateBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.peace_graffiti))
-        glView = GLView(this)
+        glView = GLView(this, helper, mCurrentPhotoPath)
+        preview.addView(glView, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
 
-        ((findViewById(R.id.preview) as ViewGroup).addView(glView, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)))
+        addWallBtn.setOnClickListener {
+            dispatchTakePictureIntent()
+        }
+        addGrafityBtn.setOnClickListener {
+            val intent = Intent()
+            intent.type = "image/*"
+            intent.action = Intent.ACTION_GET_CONTENT
+            startActivityForResult(Intent.createChooser(intent, "Select Picture"), REQUEST_SELECT_PICTURE)
+        }
+        plusBtn.setOnClickListener{
+            helper.bmHeight += 0.1f
+            helper.updateWidth()
+        }
+        minusBtn.setOnClickListener {
+            if (helper.bmHeight > 0)
+                helper.bmHeight -= 0.1f
+            helper.updateWidth()
+        }
+        doneBtn.setOnClickListener {
+            plusBtn.visibility = View.GONE
+            minusBtn.visibility = View.GONE
+            doneBtn.visibility = View.GONE
+            imageView.visibility = View.GONE
+
+            //save data to server here
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        preview.removeView(glView)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (glView!!.parent == null)
+            preview.addView(glView)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == FragmentActivity.RESULT_OK)
+        {
+            imageView.visibility = View.VISIBLE
+            imageView.setImageBitmap(BitmapFactory.decodeFile(mCurrentPhotoPath))
+            reloadGlView()
+        } else if(requestCode == REQUEST_SELECT_PICTURE && resultCode == RESULT_OK) {
+            plusBtn.visibility = View.VISIBLE
+            minusBtn.visibility = View.VISIBLE
+            doneBtn.visibility = View.VISIBLE
+            val selectedImageURI = data!!.data
+            val image = MediaStore.Images.Media.getBitmap(this.contentResolver, selectedImageURI)
+            helper.updateBitmap(image)
+
+        }
+    }
+
+    private fun reloadGlView()
+    {
+        preview.removeView(glView)
+        glView = GLView(this, helper, mCurrentPhotoPath)
+        preview.addView(glView)
+    }
+
+    private fun createImageFile(): File {
+        // Create an image file name
+        val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
+        val imageFileName = "JPEG_" + timeStamp + "_"
+        val storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+        val image = File.createTempFile(
+                imageFileName, /* prefix */
+                ".jpg", /* suffix */
+                storageDir      /* directory */
+        )
+
+        // Save a file: path for use with ACTION_VIEW intents
+        mCurrentPhotoPath = image.absolutePath
+        return image
+    }
+
+    private fun dispatchTakePictureIntent() {
+        val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+        if (takePictureIntent.resolveActivity(packageManager) != null) {
+            val photoFile : File = createImageFile()
+            val photoURI = FileProvider.getUriForFile(this@SprayArt, "com.example.hackintosh.sprayart.fileprovider", photoFile)
+            takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI)
+            startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE)
+        }
     }
 }

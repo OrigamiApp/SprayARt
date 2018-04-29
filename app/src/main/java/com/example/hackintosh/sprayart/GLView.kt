@@ -1,6 +1,7 @@
 package com.example.hackintosh.sprayart
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.opengl.GLSurfaceView
 import cn.easyar.Engine
 import javax.microedition.khronos.egl.EGL10
@@ -9,14 +10,14 @@ import javax.microedition.khronos.egl.EGLContext
 import javax.microedition.khronos.egl.EGLDisplay
 import javax.microedition.khronos.opengles.GL10
 
-class GLView(context: Context) : GLSurfaceView(context) {
+class GLView(context: Context, textureHelper : TextureHelper, imagePath : String) : GLSurfaceView(context) {
     private val easyAR: EasyAR
 
     init {
         setEGLContextFactory(ContextFactory())
         setEGLConfigChooser(ConfigChooser())
 
-        easyAR = EasyAR()
+        easyAR = EasyAR(textureHelper, imagePath)
 
         this.setRenderer(object : GLSurfaceView.Renderer {
             override fun onSurfaceCreated(gl: GL10, config: EGLConfig) {

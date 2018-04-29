@@ -1,11 +1,18 @@
 package com.example.hackintosh.sprayart
 
+import android.content.Context
+import android.database.Cursor
+import android.graphics.Bitmap
+import android.net.Uri
 import android.opengl.GLES20
 import android.util.Log
 import cn.easyar.*
 import com.example.hackintosh.sprayart.*
+import android.provider.MediaStore
 
-class EasyAR {
+
+
+class EasyAR(private val textureHelper : TextureHelper, private val path : String) {
     private var camera: CameraDevice? = null
     private var streamer: CameraFrameStreamer? = null
     private val trackers = ArrayList<ImageTracker>()
@@ -45,6 +52,7 @@ class EasyAR {
     }
 
     fun initialize(): Boolean {
+        Log.i("INTIALIZE","Initialized")
         camera = CameraDevice()
         streamer = CameraFrameStreamer()
         streamer!!.attachCamera(camera)
@@ -58,10 +66,13 @@ class EasyAR {
         }
         val tracker = ImageTracker()
         tracker.attachStreamer(streamer)
-        loadFromJsonFile(tracker, "targets.json", "argame")
-        loadFromJsonFile(tracker, "targets.json", "idback")
-        loadAllFromJsonFile(tracker, "targets2.json")
-        loadFromImage(tracker, "namecard.jpg")
+        if(path.isNotEmpty()) {
+            loadFromImage(tracker, path)
+        }
+//        loadFromJsonFile(tracker, "targets.json", "argame")
+//        loadFromJsonFile(tracker, "targets.json", "idback")
+//        loadAllFromJsonFile(tracker, "targets2.json")
+//        loadFromImage(tracker, "namecard.jpg")
         trackers.add(tracker)
 
         return status
@@ -114,7 +125,7 @@ class EasyAR {
         }
         videobg_renderer = Renderer()
         box_renderer = BoxRenderer()
-        imageRenderer = ImageRenderer()
+        imageRenderer = ImageRenderer(textureHelper)
         box_renderer!!.init()
         imageRenderer!!.init()
     }
