@@ -2,16 +2,21 @@ package com.example.hackintosh.sprayart
 
 import android.opengl.GLES20
 import android.R.attr.data
+import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
+import android.provider.MediaStore
 import android.util.Log
 import cn.easyar.Vec2F
 import cn.easyar.Matrix44F
+import cn.easyar.TargetInstance
 import java.nio.ByteBuffer
 import java.nio.FloatBuffer
 import java.nio.ShortBuffer
 
 
-class ImageRenderer(private val textureHelper : TextureHelper) {
+class ImageRenderer(val context : Context) {
     private var shaderProgram: Int = 0
     private var posCoord: Int = 0
     private var posTex: Int = 0
@@ -189,20 +194,23 @@ class ImageRenderer(private val textureHelper : TextureHelper) {
 
         GLES20.glUniform1i(GLES20.glGetUniformLocation(shaderProgram, "texture"), 0)
 
-        textureHelper.texture = generateOneTexture()
-        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureHelper.texture)
+        //textureHelper.texture = generateOneTexture()
+        //GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureHelper.texture)
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR)
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR)
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE)
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE)
     }
 
-    fun render(projectionMatrix: Matrix44F, cameraview: Matrix44F, size: Vec2F) {
+    fun render(projectionMatrix: Matrix44F, targetInstance: TargetInstance, size: Vec2F) {
         Log.e("ImageRenderer", "render")
 
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vboCoord)
+        //val image = BitmapFactory.decodeResource(context.resources, targetInstance.target().name().toInt())
+        val image = MediaStore.Images.Media.getBitmap(context.contentResolver, Uri.parse(targetInstance.target().name()))
+        val helper = TextureHelper(image)
 
-        val cube_vertices = arrayOf(floatArrayOf(textureHelper.bmHeight, textureHelper.bmWidth, 0f), floatArrayOf(textureHelper.bmHeight, -textureHelper.bmWidth, 0f), floatArrayOf(-textureHelper.bmHeight, -textureHelper.bmWidth, 0f), floatArrayOf(-textureHelper.bmHeight, textureHelper.bmWidth, 0f))
+        val cube_vertices = arrayOf(floatArrayOf(helper.bmWidth, helper.bmHeight, 0f), floatArrayOf(helper.bmWidth, -helper.bmHeight, 0f), floatArrayOf(-helper.bmWidth, -helper.bmHeight, 0f), floatArrayOf(-helper.bmWidth, helper.bmHeight, 0f))
         val cube_vertices_buffer = FloatBuffer.wrap(flatten(cube_vertices))
         GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, cube_vertices_buffer.limit() * 4, cube_vertices_buffer, GLES20.GL_DYNAMIC_DRAW)
 
@@ -216,14 +224,14 @@ class ImageRenderer(private val textureHelper : TextureHelper) {
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vboTex)
         GLES20.glEnableVertexAttribArray(posTex)
         GLES20.glVertexAttribPointer(posTex, 2, GLES20.GL_UNSIGNED_BYTE, false, 0, 0)
-        GLES20.glUniformMatrix4fv(posTrans, 1, false, cameraview.data, 0)
+        GLES20.glUniformMatrix4fv(posTrans, 1, false, targetInstance.poseGL().data, 0)
         GLES20.glUniformMatrix4fv(posProj, 1, false, projectionMatrix.data, 0)
         GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, vboFaces)
 
         GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, vboFaces)
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
 
-        textureHelper.updateTexture()
+        helper.updateTexture()
 
         GLES20.glDrawElements(GLES20.GL_TRIANGLE_FAN, 4, GLES20.GL_UNSIGNED_SHORT, 0)
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0)

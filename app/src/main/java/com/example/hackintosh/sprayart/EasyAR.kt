@@ -12,7 +12,7 @@ import android.provider.MediaStore
 
 
 
-class EasyAR(private val textureHelper : TextureHelper, private val path : String) {
+class EasyAR(val context : Context,private val photosMap : MutableMap<String, String>) {
     private var camera: CameraDevice? = null
     private var streamer: CameraFrameStreamer? = null
     private val trackers = ArrayList<ImageTracker>()
@@ -24,29 +24,19 @@ class EasyAR(private val textureHelper : TextureHelper, private val path : Strin
     private var rotation = 0
     private var viewport = Vec4I(0, 0, 1280, 720)
 
-    private fun loadFromImage(tracker: ImageTracker, path: String) {
-        val target = ImageTarget()
-        val jstr = """{
-  "images" :
-  [
-    {
-      "image" : "$path",
-      "name" : "${path.substring(0, path.indexOf("."))}"
-    }
-  ]
-}"""
-        target.setup(jstr, StorageType.Assets or StorageType.Json, "")
-        tracker.loadTarget(target) { target, status -> Log.i("HelloAR", "load target ($status): ${target.name()} (${target.runtimeID()})") }
-    }
-
-    private fun loadFromJsonFile(tracker: ImageTracker, path: String, targetname: String) {
-        val target = ImageTarget()
-        target.setup(path, StorageType.Assets, targetname)
-        tracker.loadTarget(target) { target, status -> Log.i("HelloAR", "load target ($status): ${target.name()} (${target.runtimeID()})") }
-    }
-
-    private fun loadAllFromJsonFile(tracker: ImageTracker, path: String) {
-        for (target in ImageTarget.setupAll(path, StorageType.Assets)) {
+    private fun loadFromMap(tracker: ImageTracker) {
+        for((key, value) in photosMap) {
+            val target = ImageTarget()
+            val jstr = """{
+                      "images" :
+                      [
+                        {
+                          "image" : "$value",
+                          "name" : "$key"
+                        }
+                      ]
+                    }"""
+            target.setup(jstr, StorageType.Assets or StorageType.Json, "")
             tracker.loadTarget(target) { target, status -> Log.i("HelloAR", "load target ($status): ${target.name()} (${target.runtimeID()})") }
         }
     }
@@ -66,13 +56,7 @@ class EasyAR(private val textureHelper : TextureHelper, private val path : Strin
         }
         val tracker = ImageTracker()
         tracker.attachStreamer(streamer)
-        if(path.isNotEmpty()) {
-            loadFromImage(tracker, path)
-        }
-//        loadFromJsonFile(tracker, "targets.json", "argame")
-//        loadFromJsonFile(tracker, "targets.json", "idback")
-//        loadAllFromJsonFile(tracker, "targets2.json")
-//        loadFromImage(tracker, "namecard.jpg")
+        loadFromMap(tracker)
         trackers.add(tracker)
 
         return status
@@ -125,7 +109,7 @@ class EasyAR(private val textureHelper : TextureHelper, private val path : Strin
         }
         videobg_renderer = Renderer()
         box_renderer = BoxRenderer()
-        imageRenderer = ImageRenderer(textureHelper)
+        imageRenderer = ImageRenderer(context)
         box_renderer!!.init()
         imageRenderer!!.init()
     }
@@ -189,7 +173,7 @@ class EasyAR(private val textureHelper : TextureHelper, private val path : Strin
                     val target = targetInstance.target()
                     val imagetarget = target as? ImageTarget ?: continue
                     //box_renderer?.render(camera!!.projectionGL(0.2f, 500f), targetInstance.poseGL(), imagetarget.size())
-                    imageRenderer?.render(camera!!.projectionGL(0.2f, 500f), targetInstance.poseGL(), imagetarget.size());
+                    imageRenderer?.render(camera!!.projectionGL(0.2f, 500f), targetInstance, imagetarget.size())
                 }
             }
         } finally {

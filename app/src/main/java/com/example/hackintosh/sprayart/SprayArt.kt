@@ -33,6 +33,8 @@ class SprayArt: AppCompatActivity() {
     private val REQUEST_SELECT_PICTURE = 101
     private var mCurrentPhotoPath = ""
     private val helper by lazy { TextureHelper(BitmapFactory.decodeResource(resources, R.drawable.sausages))}
+    private val photosMap = mutableMapOf<String, String>()
+    private var selectedGrafitti : Uri = Uri.EMPTY
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,7 +44,9 @@ class SprayArt: AppCompatActivity() {
         if (!Engine.initialize(this, key)) {
             Log.e("HelloAR", "Initialization Failed.")
         }
-        glView = GLView(this, helper, mCurrentPhotoPath)
+
+        photosMap["${R.drawable.sausages}"] = "idback.jpg"
+        glView = GLView(this, photosMap)
         preview.addView(glView, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
 
         addWallBtn.setOnClickListener {
@@ -55,20 +59,18 @@ class SprayArt: AppCompatActivity() {
             startActivityForResult(Intent.createChooser(intent, "Select Picture"), REQUEST_SELECT_PICTURE)
         }
         plusBtn.setOnClickListener{
-            helper.bmHeight += 0.1f
-            helper.updateWidth()
+
         }
         minusBtn.setOnClickListener {
-            if (helper.bmHeight > 0)
-                helper.bmHeight -= 0.1f
-            helper.updateWidth()
+
         }
         doneBtn.setOnClickListener {
             plusBtn.visibility = View.GONE
             minusBtn.visibility = View.GONE
             doneBtn.visibility = View.GONE
             imageView.visibility = View.GONE
-
+            photosMap[selectedGrafitti.toString()] = mCurrentPhotoPath
+            reloadGlView()
             //save data to server here
         }
     }
@@ -95,9 +97,8 @@ class SprayArt: AppCompatActivity() {
             plusBtn.visibility = View.VISIBLE
             minusBtn.visibility = View.VISIBLE
             doneBtn.visibility = View.VISIBLE
-            val selectedImageURI = data!!.data
-            val image = MediaStore.Images.Media.getBitmap(this.contentResolver, selectedImageURI)
-            helper.updateBitmap(image)
+            selectedGrafitti = data!!.data
+
 
         }
     }
@@ -105,7 +106,7 @@ class SprayArt: AppCompatActivity() {
     private fun reloadGlView()
     {
         preview.removeView(glView)
-        glView = GLView(this, helper, mCurrentPhotoPath)
+        glView = GLView(this, photosMap)
         preview.addView(glView)
     }
 

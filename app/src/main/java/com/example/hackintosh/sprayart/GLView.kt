@@ -10,14 +10,14 @@ import javax.microedition.khronos.egl.EGLContext
 import javax.microedition.khronos.egl.EGLDisplay
 import javax.microedition.khronos.opengles.GL10
 
-class GLView(context: Context, textureHelper : TextureHelper, imagePath : String) : GLSurfaceView(context) {
+class GLView(context: Context, photosMap : MutableMap<String, String>) : GLSurfaceView(context) {
     private val easyAR: EasyAR
 
     init {
         setEGLContextFactory(ContextFactory())
         setEGLConfigChooser(ConfigChooser())
 
-        easyAR = EasyAR(textureHelper, imagePath)
+        easyAR = EasyAR(context, photosMap)
 
         this.setRenderer(object : GLSurfaceView.Renderer {
             override fun onSurfaceCreated(gl: GL10, config: EGLConfig) {

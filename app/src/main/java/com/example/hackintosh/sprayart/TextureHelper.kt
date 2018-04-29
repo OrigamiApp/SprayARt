@@ -9,22 +9,19 @@ import android.util.Log
 
 class TextureHelper (private var bitmap: Bitmap){
 
+    var ratio : Float = 0.5f / bitmap.height
+    set(value) {
+        field = value
+        bmHeight = bitmap.height.toFloat() * ratio
+        bmWidth = bitmap.width.toFloat() * ratio
+    }
     var texture: Int = 0
-    var bmHeight : Float = 0.5f
-    var bmWidth : Float =  (bitmap.height.toFloat() * bmHeight) / bitmap.width.toFloat()
+    var bmHeight : Float = bitmap.height.toFloat() * ratio
+    var bmWidth : Float = bitmap.width.toFloat() * ratio
 
     fun updateTexture() {
         Log.e("Update", "texture")
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texture)
         GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0)
-    }
-
-    fun updateBitmap(newBitmap: Bitmap) {
-        bitmap = newBitmap
-        bmWidth = (bitmap.height.toFloat() * bmHeight) / bitmap.width.toFloat()
-    }
-
-    fun updateWidth() {
-        bmWidth = (bitmap.height.toFloat() * bmHeight) / bitmap.width.toFloat()
     }
 }
