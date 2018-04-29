@@ -92,7 +92,7 @@ class SprayArt: AppCompatActivity() {
         {
             imageView.visibility = View.VISIBLE
             imageView.setImageBitmap(BitmapFactory.decodeFile(mCurrentPhotoPath))
-            reloadGlView()
+
         } else if(requestCode == REQUEST_SELECT_PICTURE && resultCode == RESULT_OK) {
             plusBtn.visibility = View.VISIBLE
             minusBtn.visibility = View.VISIBLE

@@ -9,7 +9,7 @@ import android.util.Log
 
 class TextureHelper (private var bitmap: Bitmap){
 
-    var ratio : Float = 0.5f / bitmap.height
+    var ratio : Float = 0.2f / bitmap.height
     set(value) {
         field = value
         bmHeight = bitmap.height.toFloat() * ratio
