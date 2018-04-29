@@ -45,7 +45,6 @@ class SprayArt: AppCompatActivity() {
             Log.e("HelloAR", "Initialization Failed.")
         }
 
-        photosMap["${R.drawable.sausages}"] = "idback.jpg"
         glView = GLView(this, photosMap)
         preview.addView(glView, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
 
@@ -58,12 +57,7 @@ class SprayArt: AppCompatActivity() {
             intent.action = Intent.ACTION_GET_CONTENT
             startActivityForResult(Intent.createChooser(intent, "Select Picture"), REQUEST_SELECT_PICTURE)
         }
-        plusBtn.setOnClickListener{
 
-        }
-        minusBtn.setOnClickListener {
-
-        }
         doneBtn.setOnClickListener {
             plusBtn.visibility = View.GONE
             minusBtn.visibility = View.GONE

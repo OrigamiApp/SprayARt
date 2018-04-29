@@ -169,11 +169,10 @@ class EasyAR(val context : Context,private val photosMap : MutableMap<String, St
             for (targetInstance in frame.targetInstances()) {
                 val status = targetInstance.status()
                 if (status == TargetStatus.Tracked) {
-                    Log.e("TargetLoop","tracked")
                     val target = targetInstance.target()
-                    val imagetarget = target as? ImageTarget ?: continue
+                    //val imagetarget = target as? ImageTarget ?: continue
                     //box_renderer?.render(camera!!.projectionGL(0.2f, 500f), targetInstance.poseGL(), imagetarget.size())
-                    imageRenderer?.render(camera!!.projectionGL(0.2f, 500f), targetInstance, imagetarget.size())
+                    imageRenderer?.render(camera!!.projectionGL(0.2f, 500f), targetInstance)
                 }
             }
         } finally {

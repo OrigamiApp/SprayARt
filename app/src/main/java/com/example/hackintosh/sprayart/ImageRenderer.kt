@@ -202,13 +202,18 @@ class ImageRenderer(val context : Context) {
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE)
     }
 
-    fun render(projectionMatrix: Matrix44F, targetInstance: TargetInstance, size: Vec2F) {
-        Log.e("ImageRenderer", "render")
+    val cachedBitmaps = mutableMapOf<String, Bitmap>()
 
+    fun render(projectionMatrix: Matrix44F, targetInstance: TargetInstance) {
+
+        val path = targetInstance.target().name()
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vboCoord)
         //val image = BitmapFactory.decodeResource(context.resources, targetInstance.target().name().toInt())
-        val image = MediaStore.Images.Media.getBitmap(context.contentResolver, Uri.parse(targetInstance.target().name()))
-        val helper = TextureHelper(image)
+        if(!cachedBitmaps.containsKey(path)) {
+            cachedBitmaps[path] = MediaStore.Images.Media.getBitmap(context.contentResolver, Uri.parse(path))
+        }
+
+        val helper = TextureHelper(cachedBitmaps[path])
 
         val cube_vertices = arrayOf(floatArrayOf(helper.bmWidth, helper.bmHeight, 0f), floatArrayOf(helper.bmWidth, -helper.bmHeight, 0f), floatArrayOf(-helper.bmWidth, -helper.bmHeight, 0f), floatArrayOf(-helper.bmWidth, helper.bmHeight, 0f))
         val cube_vertices_buffer = FloatBuffer.wrap(flatten(cube_vertices))
@@ -232,7 +237,6 @@ class ImageRenderer(val context : Context) {
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
 
         helper.updateTexture()
-
         GLES20.glDrawElements(GLES20.GL_TRIANGLE_FAN, 4, GLES20.GL_UNSIGNED_SHORT, 0)
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0)
     }
